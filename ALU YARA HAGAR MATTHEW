@@ -1,0 +1,158 @@
+module ALU (
+    input  logic [2:0] A,
+    input  logic [2:0] B,
+    input  logic [2:0] Op,
+    output logic [2:0] F,
+    output logic V,
+    output logic Z
+);
+
+logic [2:0] F_add, F_sub, F_2scmp, F_inc, F_xor, F_cmp, F_or, F_and;
+logic V_add, V_sub, V_2scmp, V_inc;
+
+assign V = (Op == 3'b000) ? V_2scmp :
+           (Op == 3'b001) ? V_add :
+           (Op == 3'b010) ? V_sub :
+           (Op == 3'b011) ? V_inc :
+           1'b0;
+
+assign F = (Op == 3'b000) ? F_2scmp :
+           (Op == 3'b001) ? F_add :
+           (Op == 3'b010) ? F_sub :
+           (Op == 3'b011) ? F_inc :
+           (Op == 3'b100) ? F_xor :
+           (Op == 3'b101) ? F_cmp :
+           (Op == 3'b110) ? F_or :
+           (Op == 3'b111) ? F_and :
+           3'b000;
+
+assign Z = (F == 3'b000) ? 1'b1 : 1'b0;
+
+Add add (
+    .A(A),
+    .B(B),
+    .F(F_add),
+    .V(V_add)
+);
+
+Sub sub (
+    .A(A),
+    .B(B),
+    .F(F_sub),
+    .V(V_sub)
+);
+
+TwosCmp twos_cmp (
+    .A(A),
+    .F(F_2scmp),
+    .V(V_2scmp)
+);
+
+Inc inc (
+    .A(A),
+    .F(F_inc),
+    .V(V_inc)
+);
+
+XOR xor_op (
+    .A(A),
+    .B(B),
+    .F(F_xor)
+);
+
+Cmp cmp (
+    .B(B),
+    .F(F_cmp)
+);
+
+OR or_op (
+    .A(A),
+    .B(B),
+    .F(F_or)
+);
+
+AND and_op (
+    .A(A),
+    .B(B),
+    .F(F_and)
+);
+
+endmodule
+
+module Add (
+    input  logic [2:0] A,
+    input  logic [2:0] B,
+    output logic [2:0] F,
+    output logic V
+);
+    logic [3:0] temp;
+    assign temp = {1'b0, A} + {1'b0, B};
+    assign F = temp[2:0];
+    assign V = ((A[2] & B[2] & ~F[2]) | (~A[2] & ~B[2] & F[2]));
+endmodule
+
+module Sub (
+    input  logic [2:0] A,
+    input  logic [2:0] B,
+    output logic [2:0] F,
+    output logic V
+);
+    logic [3:0] temp;
+    assign temp = {1'b0, B} - {1'b0, A};
+    assign F = temp[2:0];
+    assign V = (B[2] ^ A[2]) & (B[2] ^ F[2]);
+endmodule
+
+module TwosCmp (
+    input  logic [2:0] A,
+    output logic [2:0] F,
+    output logic V
+);
+    logic [3:0] temp;
+    assign temp = {1'b0, ~A} + 4'b0001;
+    assign F = temp[2:0];
+    assign V = temp[3]; 
+endmodule
+
+module Inc (
+    input  logic [2:0] A,
+    output logic [2:0] F,
+    output logic V
+);
+    logic [3:0] temp;
+    assign temp = {1'b0, A} + 4'b0001;
+    assign F = temp[2:0];
+    assign V = temp[3];  
+endmodule
+
+module XOR (
+    input  logic [2:0] A,
+    input  logic [2:0] B,
+    output logic [2:0] F
+);
+    assign F = A ^ B;
+endmodule
+
+module Cmp (
+    input  logic [2:0] B,
+    output logic [2:0] F
+);
+    assign F = ~B;
+endmodule
+
+module OR (
+    input  logic [2:0] A,
+    input  logic [2:0] B,
+    output logic [2:0] F
+);
+    assign F = A | B;
+endmodule
+
+module AND (
+    input  logic [2:0] A,
+    input  logic [2:0] B,
+    output logic [2:0] F
+);
+    assign F = A & B;
+endmodule
+
